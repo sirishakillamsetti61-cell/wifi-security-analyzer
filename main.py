@@ -6,7 +6,7 @@ Run against networks you own or are explicitly authorized to test.
 
 from scanner.network import get_network_info
 from scanner.devices import get_known_devices
-
+from scanner.security import get_current_wifi_security, evaluate_security
 
 def print_banner():
     print("=" * 40)
@@ -31,6 +31,24 @@ def main():
     if not devices:
         print("(No devices found in ARP cache yet. Try browsing the web or")
         print(" pinging a few devices on your network, then re-run this.)")
+        print("\n" + "=" * 40)
+    print("      WI-FI SECURITY CHECK")
+    print("=" * 40)
+
+    sec_info = get_current_wifi_security()
+
+    if "error" in sec_info:
+        print(f"[!] {sec_info['error']}")
+    else:
+        print(f"SSID           : {sec_info.get('ssid', 'Unknown')}")
+        print(f"Authentication : {sec_info.get('authentication', 'Unknown')}")
+        print(f"Cipher         : {sec_info.get('cipher', 'Unknown')}")
+        print(f"Radio type     : {sec_info.get('radio_type', 'Unknown')}")
+        print(f"Channel        : {sec_info.get('channel', 'Unknown')}")
+
+        print("\n--- Assessment ---")
+        for warning in evaluate_security(sec_info):
+            print(f"- {warning}")
 
 
 if __name__ == "__main__":

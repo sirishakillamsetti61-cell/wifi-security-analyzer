@@ -5,8 +5,9 @@ Phase 1 approach: read the OS's existing ARP cache (the table of devices
 your machine has already talked to on the LAN). This requires no special
 privileges and touches no other device directly — it just reads local state.
 
-Broadcast and multicast entries (used for network-wide announcements, not
-individual devices) are filtered out for a cleaner, more accurate list.
+Broadcast, multicast, and known virtual-adapter entries (VMware, VirtualBox,
+Hyper-V, Docker) are filtered out for a cleaner, more accurate list of real
+devices on your Wi-Fi network.
 """
 
 import subprocess
@@ -14,6 +15,19 @@ import platform
 import re
 
 BROADCAST_MAC = "FF:FF:FF:FF:FF:FF"
+
+# MAC address prefixes (OUIs) registered to virtualization software vendors.
+# These devices exist only inside your own PC and never touch your real Wi-Fi.
+VIRTUAL_MAC_PREFIXES = (
+    "00:50:56",  # VMware
+    "00:0C:29",  # VMware
+    "00:05:69",  # VMware
+    "00:1C:14",  # VMware
+    "08:00:27",  # VirtualBox
+    "0A:00:27",  # VirtualBox (host-only adapter)
+    "00:15:5D",  # Hyper-V
+    "02:42:AC",  # Docker (default bridge network)
+)
 
 
 def _run_arp_a() -> str:
@@ -30,6 +44,10 @@ def _is_multicast_mac(mac: str) -> bool:
     return mac.startswith("01:00:5E") or mac.startswith("33:33")
 
 
+def _is_virtual_adapter(mac: str) -> bool:
+    return mac.startswith(VIRTUAL_MAC_PREFIXES)
+
+
 def _is_broadcast_or_multicast(ip: str, mac: str) -> bool:
     if mac == BROADCAST_MAC:
         return True
@@ -44,10 +62,14 @@ def _is_broadcast_or_multicast(ip: str, mac: str) -> bool:
     return False
 
 
-def get_known_devices() -> list[dict]:
+def get_known_devices(include_virtual: bool = False) -> list[dict]:
     """
     Parse the system ARP table into a list of {ip, mac} dicts,
-    excluding broadcast/multicast noise.
+    excluding broadcast/multicast noise and (by default) known
+    virtual-adapter entries.
+
+    Set include_virtual=True to see virtual adapters too (useful for
+    debugging or if you're intentionally auditing your VM network).
     """
     output = _run_arp_a()
     if not output:
@@ -71,11 +93,13 @@ def get_known_devices() -> list[dict]:
         for ip, mac in pattern.findall(output):
             raw_devices.append({"ip": ip, "mac": mac.upper()})
 
-    # Filter out broadcast/multicast noise and de-duplicate.
+    # Filter out broadcast/multicast noise, virtual adapters, and de-duplicate.
     seen = set()
     devices = []
     for d in raw_devices:
         if _is_broadcast_or_multicast(d["ip"], d["mac"]):
+            continue
+        if not include_virtual and _is_virtual_adapter(d["mac"]):
             continue
         key = (d["ip"], d["mac"])
         if key in seen:

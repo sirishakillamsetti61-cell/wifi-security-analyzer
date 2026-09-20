@@ -8,6 +8,7 @@ from scanner.network import get_network_info
 from scanner.devices import get_known_devices
 from scanner.security import get_current_wifi_security, evaluate_security
 from scanner.nearby_networks import scan_nearby_networks, flag_weak_networks
+from scanner.scorer import compute_overall_score
 
 
 def print_banner():
@@ -70,6 +71,23 @@ def main():
             print(f"  ⚠ {net['ssid']} ({net['authentication']}) — consider avoiding")
     else:
         print("  ✓ No weak or outdated networks detected nearby.")
+        print("\n" + "=" * 40)
+    print("      OVERALL SECURITY SCORE")
+    print("=" * 40)
+
+    result = compute_overall_score(
+        sec_info=sec_info,
+        sec_warnings=evaluate_security(sec_info) if "error" not in sec_info else [],
+        devices=devices,
+        weak_nearby=weak,
+    )
+
+    print(f"Connection Security : {result['connection_score']} / 60")
+    print(f"Device Trust         : {result['device_score']} / 20")
+    print(f"Nearby Network Risk  : {result['nearby_score']} / 20")
+    print("-" * 40)
+    print(f"TOTAL SCORE          : {result['total_score']} / 100")
+    print(f"GRADE                : {result['grade']}") 
 
 
 if __name__ == "__main__":

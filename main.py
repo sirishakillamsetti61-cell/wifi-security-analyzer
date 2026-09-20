@@ -7,6 +7,8 @@ Run against networks you own or are explicitly authorized to test.
 from scanner.network import get_network_info
 from scanner.devices import get_known_devices
 from scanner.security import get_current_wifi_security, evaluate_security
+from scanner.nearby_networks import scan_nearby_networks, flag_weak_networks
+
 
 def print_banner():
     print("=" * 40)
@@ -31,7 +33,8 @@ def main():
     if not devices:
         print("(No devices found in ARP cache yet. Try browsing the web or")
         print(" pinging a few devices on your network, then re-run this.)")
-        print("\n" + "=" * 40)
+
+    print("\n" + "=" * 40)
     print("      WI-FI SECURITY CHECK")
     print("=" * 40)
 
@@ -49,6 +52,24 @@ def main():
         print("\n--- Assessment ---")
         for warning in evaluate_security(sec_info):
             print(f"- {warning}")
+
+    print("\n" + "=" * 40)
+    print("      NEARBY NETWORK SCAN")
+    print("=" * 40)
+
+    nearby = scan_nearby_networks()
+    print(f"Networks Found: {len(nearby)}")
+    print("-" * 40)
+    for net in nearby:
+        print(f"{net['ssid']:<25} {net['authentication']:<20} {net['signal']}")
+
+    weak = flag_weak_networks(nearby)
+    print(f"\nWeak/Outdated Networks: {len(weak)}")
+    if weak:
+        for net in weak:
+            print(f"  ⚠ {net['ssid']} ({net['authentication']}) — consider avoiding")
+    else:
+        print("  ✓ No weak or outdated networks detected nearby.")
 
 
 if __name__ == "__main__":

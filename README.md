@@ -11,7 +11,7 @@ A Python command-line tool that audits your local Wi-Fi environment — checking
 - **Connection Security Check** — inspects your current Wi-Fi's authentication type and encryption cipher, flagging outdated or weak configurations (Open, WEP, TKIP)
 - **Nearby Network Scanner** — scans for other Wi-Fi networks in range and flags any using weak or outdated security
 - **Overall Security Score** — combines all checks into a single 0–100 score and letter grade (A–F)
-
+- **Disconnect Alerts** — runs a background monitor that sends a desktop notification the moment your Wi-Fi disconnects or reconnects
 ## Sample Output
 
 ```
@@ -81,6 +81,7 @@ wifi-security-analyzer/
 
 - Windows (uses `netsh` for Wi-Fi data — Wi-Fi checks and nearby scans are Windows-only)
 - Python 3.10+
+- `winotify` (for desktop notifications — included in requirements.txt)
 
 ## Setup
 
@@ -111,6 +112,7 @@ Or run individual modules on their own:
 python -m scanner.devices             # device discovery only
 python -m scanner.security            # connection security check only
 python -m scanner.nearby_networks     # nearby network scan only
+python -m scanner.monitor             # background disconnect/reconnect notifier
 ```
 
 ## How Scoring Works

@@ -8,10 +8,12 @@ A Python command-line tool that audits your local Wi-Fi environment — checking
 
 - **Network Info** — reports your local IP, gateway, and subnet
 - **Device Discovery** — lists devices on your network via the ARP cache, automatically filtering out noise from virtual adapters (VMware, VirtualBox, Hyper-V, Docker)
+- **Known Device Allowlist** — flags any device not on your trusted list as "unknown," helping detect unauthorized Wi-Fi use
 - **Connection Security Check** — inspects your current Wi-Fi's authentication type and encryption cipher, flagging outdated or weak configurations (Open, WEP, TKIP)
-- **Nearby Network Scanner** — scans for other Wi-Fi networks in range and flags any using weak or outdated security
+- **Nearby Network Scanner** — scans for other Wi-Fi networks in range, explicitly flagging fully open (no password) networks as well as other weak/outdated security
 - **Overall Security Score** — combines all checks into a single 0–100 score and letter grade (A–F)
 - **Disconnect Alerts** — runs a background monitor that sends a desktop notification the moment your Wi-Fi disconnects or reconnects
+
 ## Sample Output
 
 ```
@@ -113,6 +115,9 @@ python -m scanner.devices             # device discovery only
 python -m scanner.security            # connection security check only
 python -m scanner.nearby_networks     # nearby network scan only
 python -m scanner.monitor             # background disconnect/reconnect notifier
+python -m scanner.allowlist add <MAC> "<name>"   # add a trusted device
+python -m scanner.allowlist list                  # view trusted devices
+python -m scanner.allowlist remove <MAC>          # remove a trusted device
 ```
 
 ## How Scoring Works
@@ -128,7 +133,6 @@ python -m scanner.monitor             # background disconnect/reconnect notifier
 ## Roadmap / Possible Extensions
 
 - WPS status detection
-- Known-device allowlist with persistent storage
 - Export reports to JSON/HTML
 - Cross-platform support (macOS/Linux equivalents for `netsh` calls)
 

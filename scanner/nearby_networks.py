@@ -76,13 +76,27 @@ def scan_nearby_networks() -> list[dict]:
 
 
 def flag_weak_networks(networks: list[dict]) -> list[dict]:
-    """Return only the networks using weak/outdated authentication."""
+    """Return all networks using weak/outdated authentication (open, WEP, legacy WPA)."""
     weak = []
     for net in networks:
         auth = net.get("authentication", "Unknown")
         if auth in WEAK_AUTH_TYPES or auth in LEGACY_AUTH_TYPES:
             weak.append(net)
     return weak
+
+
+def flag_open_networks(networks: list[dict]) -> list[dict]:
+    """
+    Return only networks with NO password/security at all — fully open.
+    These are the highest-risk networks: anyone nearby can join them, and
+    their traffic isn't encrypted.
+    """
+    open_nets = []
+    for net in networks:
+        auth = net.get("authentication", "Unknown")
+        if auth in ("Open", ""):
+            open_nets.append(net)
+    return open_nets
 
 
 if __name__ == "__main__":
@@ -92,7 +106,15 @@ if __name__ == "__main__":
     for n in nets:
         print(f"{n['ssid']:<25} {n['authentication']:<20} {n['signal']}")
 
+    open_nets = flag_open_networks(nets)
+    print(f"\n🔓 Open (No Password) Networks: {len(open_nets)}")
+    if open_nets:
+        for n in open_nets:
+            print(f"  - {n['ssid']}  (Signal: {n['signal']}) — anyone can join, unencrypted!")
+    else:
+        print("  ✓ No completely open networks detected nearby.")
+
     weak = flag_weak_networks(nets)
-    print(f"\n⚠ Weak/Outdated Networks: {len(weak)}")
+    print(f"\n⚠ Weak/Outdated Networks (open, WEP, legacy WPA): {len(weak)}")
     for n in weak:
         print(f"  - {n['ssid']} ({n['authentication']})")

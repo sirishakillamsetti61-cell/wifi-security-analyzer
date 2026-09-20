@@ -8,3 +8,4 @@ __pycache__/
 config/settings.json
 reports/*.pdf
 reports/*.html
+approved_devices.json

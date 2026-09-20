@@ -5,10 +5,12 @@ Run against networks you own or are explicitly authorized to test.
 """
 
 from scanner.network import get_network_info
-from scanner.devices import get_known_devices
+from scanner.devices import get_known_devices, compare_to_approved
 from scanner.security import get_current_wifi_security, evaluate_security
-from scanner.nearby_networks import scan_nearby_networks, flag_weak_networks
+from scanner.nearby_networks import scan_nearby_networks, flag_weak_networks, flag_open_networks
 from scanner.scorer import compute_overall_score
+from scanner.allowlist import get_approved_macs
+
 
 
 def print_banner():
@@ -26,14 +28,24 @@ def main():
     print(f"Subnet   : {info['subnet']}")
 
     devices = get_known_devices()
+    approved_macs = get_approved_macs()
+    comparison = compare_to_approved(devices, approved_macs)
+
     print(f"\nDevices Found: {len(devices)}")
     print("-" * 40)
     for device in devices:
-        print(f"{device['ip']:<16} {device['mac']}")
+        status = "✓ known" if device["mac"] in approved_macs else "⚠ UNKNOWN"
+        print(f"{device['ip']:<16} {device['mac']:<20} {status}")
 
     if not devices:
         print("(No devices found in ARP cache yet. Try browsing the web or")
         print(" pinging a few devices on your network, then re-run this.)")
+
+    unknown_count = len(comparison["unknown"])
+    if unknown_count > 0:
+        print(f"\n⚠ {unknown_count} unrecognized device(s) on your network!")
+        print("  If you don't recognize these, someone may be using your Wi-Fi.")
+        print("  Add trusted devices with: python -m scanner.allowlist add <MAC> \"<name>\"")
 
     print("\n" + "=" * 40)
     print("      WI-FI SECURITY CHECK")
@@ -64,6 +76,14 @@ def main():
     for net in nearby:
         print(f"{net['ssid']:<25} {net['authentication']:<20} {net['signal']}")
 
+    open_nets = flag_open_networks(nearby)
+    print(f"\n🔓 Open (No Password) Networks: {len(open_nets)}")
+    if open_nets:
+        for net in open_nets:
+            print(f"  - {net['ssid']}  (Signal: {net['signal']}) — anyone can join, unencrypted!")
+    else:
+        print("  ✓ No completely open networks detected nearby.")
+
     weak = flag_weak_networks(nearby)
     print(f"\nWeak/Outdated Networks: {len(weak)}")
     if weak:
@@ -80,6 +100,7 @@ def main():
         sec_warnings=evaluate_security(sec_info) if "error" not in sec_info else [],
         devices=devices,
         weak_nearby=weak,
+        unknown_device_count=unknown_count,
     )
 
     print(f"Connection Security : {result['connection_score']} / 60")

@@ -17,22 +17,25 @@ A Python command-line tool that audits your local Wi-Fi environment — checking
 ## Sample Output
 
 ```
+## Sample Output
+
+```
 ========================================
       WI-FI SECURITY ANALYZER
 ========================================
 
-Local IP : 10.29.39.196
-Gateway  : 10.29.39.74
-Subnet   : 10.29.39.0/24
+Local IP : 192.168.1.42
+Gateway  : 192.168.1.1
+Subnet   : 192.168.1.0/24
 
 Devices Found: 1
 ----------------------------------------
-10.29.39.74      F2:4C:C0:0C:83:A6
+192.168.1.1      AA:BB:CC:11:22:33
 
 ========================================
       WI-FI SECURITY CHECK
 ========================================
-SSID           : Sirisha
+SSID           : MyHomeNetwork
 Authentication : WPA2-Personal
 Cipher         : CCMP
 Radio type     : 802.11n
@@ -46,7 +49,10 @@ Channel        : 6
 ========================================
 Networks Found: 1
 ----------------------------------------
-Sirisha                   WPA2-Personal        100%
+MyHomeNetwork              WPA2-Personal        100%
+
+🔓 Open (No Password) Networks: 0
+  ✓ No completely open networks detected nearby.
 
 Weak/Outdated Networks: 0
   ✓ No weak or outdated networks detected nearby.
@@ -61,6 +67,8 @@ Nearby Network Risk  : 20 / 20
 TOTAL SCORE          : 90 / 100
 GRADE                : A — Excellent
 ```
+
+*(Sample output shown above — your actual results will reflect your own network.)*
 
 ## Project Structure
 
